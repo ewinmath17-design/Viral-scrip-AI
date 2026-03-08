@@ -8,7 +8,7 @@ st.set_page_config(page_title="ViralScript AI", page_icon="🎬", layout="center
 st.title("🎬 ViralScript AI")
 st.write("Unggah screenshot produk, dan AI akan meracik skrip video pendek viral yang siap untuk mesin Text-to-Speech (TTS).")
 
-# Mengambil API Key dari Streamlit Secrets (PENTING!)
+# Mengambil API Key dari Streamlit Secrets
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
@@ -17,8 +17,9 @@ if not api_key:
 
 # Konfigurasi AI
 genai.configure(api_key=api_key)
-# Menggunakan model Gemini Flash yang cepat dan bisa baca gambar
-model = genai.GenerativeModel('gemini-1.5-flash') 
+
+# MENGGUNAKAN MODEL TERBARU UNTUK MENGHINDARI ERROR 404
+model = genai.GenerativeModel('gemini-2.5-flash') 
 
 # Antarmuka Pengguna (UI)
 st.markdown("---")
