@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 from PIL import Image
 
 # Konfigurasi Halaman Web
@@ -15,11 +15,8 @@ if not api_key:
     st.warning("⚠️ API Key belum dipasang! Silakan atur GEMINI_API_KEY di pengaturan rahasia (Secrets) Streamlit Anda.")
     st.stop()
 
-# Konfigurasi AI
-genai.configure(api_key=api_key)
-
-# MENGGUNAKAN MODEL TERBARU UNTUK MENGHINDARI ERROR 404
-model = genai.GenerativeModel('gemini-2.5-flash') 
+# Inisialisasi Klien AI dengan SDK TERBARU
+client = genai.Client(api_key=api_key)
 
 # Antarmuka Pengguna (UI)
 st.markdown("---")
@@ -28,9 +25,9 @@ style_input = st.text_input("🗣️ Gaya Bahasa/Logat (Opsional)", placeholder=
 
 if st.button("🚀 Generate Skrip Viral!"):
     if uploaded_file is not None:
-        # Tampilkan gambar yang diunggah
+        # Tampilkan gambar yang diunggah (Memperbaiki warning use_column_width)
         image = Image.open(uploaded_file)
-        st.image(image, caption="Produk yang dianalisis", use_column_width=True)
+        st.image(image, caption="Produk yang dianalisis", use_container_width=True)
         
         with st.spinner("🤖 Membedah produk dan meracik skrip Hook..."):
             try:
@@ -66,14 +63,17 @@ if st.button("🚀 Generate Skrip Viral!"):
                 - Hashtags: [5-7 hashtag relevan]
                 """
                 
-                # Mengirim gambar dan instruksi ke AI
-                response = model.generate_content([system_prompt, image])
+                # Mengirim gambar dan instruksi ke AI (Format baru)
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=[system_prompt, image]
+                )
                 
                 # Menampilkan Hasil
                 st.success("✨ Skrip Berhasil Dibuat!")
                 st.markdown(response.text)
                 
             except Exception as e:
-                st.error(f"Waduh, ada yang salah: {e}")
+                st.error(f"Waduh, ada yang salah saat generate: {e}")
     else:
         st.error("⚠️ Harap unggah gambar produk terlebih dahulu Bosku!")
