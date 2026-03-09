@@ -7,8 +7,8 @@ import io
 # Konfigurasi Halaman Web
 st.set_page_config(page_title="ViralScript AI Pro", page_icon="🎬", layout="centered")
 
-st.title("🎬 ViralScript AI Pro")
-st.write("Unggah gambar produk. AI akan meracik skrip viral siap TTS sekaligus membuat Prompt Video AI (3 Bagian @ 8 Detik). Sekarang dilengkapi dengan Studio Voice Over!")
+st.title("🎬 ViralScript AI Pro Ultimate")
+st.write("1️⃣ Bedah Skrip | 2️⃣ Studio Voice Over | 3️⃣ Studio Avatar (Anti Wajah Berubah)")
 
 # Mengambil API Key dari Streamlit Secrets
 api_key = st.secrets.get("GEMINI_API_KEY")
@@ -46,10 +46,10 @@ if st.button("🚀 Generate Skrip & Prompt Video!"):
 
                 ATURAN UTAMA:
                 1. Skrip WAJIB dibagi menjadi tepat 3 bagian, masing-masing berdurasi 8 detik (Total 24 detik).
-                2. Di setiap 'Prompt Visual AI' (dalam bahasa Inggris), Anda WAJIB mereferensikan detail visual spesifik yang Anda lihat di gambar (seperti warna kemasan, logo, teks, bentuk produk).
+                2. Di setiap 'Prompt Visual AI' (dalam bahasa Inggris), Anda WAJIB mereferensikan detail visual spesifik yang Anda lihat di gambar.
                 3. WAJIB pertahankan konsistensi karakter Avatar. Default avatar: "A beautiful 30-year-old Indonesian woman, warm and expressive."
                 4. Voice Over harus hiper-lokal sesuai gaya bahasa.
-                5. WAJIB ikuti struktur FORMAT OUTPUT di bawah ini, pastikan Prompt dan Voice Over diletakkan di dalam blok kode Markdown (menggunakan ```text dan ```) agar Streamlit memunculkan tombol copy.
+                5. WAJIB ikuti struktur FORMAT OUTPUT di bawah ini. Letakkan Prompt dan Voice Over di dalam blok kode Markdown (menggunakan ```text dan ```).
 
                 FORMAT OUTPUT:
                 🎯 **ANALISIS PRODUK CEPAT**
@@ -111,33 +111,28 @@ if st.button("🚀 Generate Skrip & Prompt Video!"):
     else:
         st.error("⚠️ Harap unggah gambar produk terlebih dahulu Bosku!")
 
+
 # ----------------------------------------------------
 # BAGIAN 2: STUDIO VOICE OVER (TEXT-TO-SPEECH)
 # ----------------------------------------------------
 st.markdown("---")
 st.header("🎙️ 2️⃣ Studio Voice Over")
-st.write("Salin teks *Voice Over* dari hasil di atas, lalu tempel (paste) di kotak bawah ini untuk mengubahnya menjadi suara yang bisa di-download.")
+st.write("Salin teks *Voice Over* dari hasil di atas, lalu tempel di sini untuk mengubahnya menjadi MP3.")
 
-# Kotak input teks
-tts_input = st.text_area("📝 Tempel Teks Skrip Di Sini:", height=150, placeholder="Contoh: WOY... JANGKO PUSING! Cari yang manis-manis untuk temani hari? Iyoo... ini dia jawabannya!")
+tts_input = st.text_area("📝 Tempel Teks Skrip Di Sini:", height=100)
 
 if st.button("🎧 Generate Audio (MP3)"):
     if tts_input.strip() != "":
         with st.spinner("🎛️ Sedang memproses rekaman suara..."):
             try:
-                # Mengubah teks menjadi suara (Bahasa Indonesia)
                 tts = gTTS(text=tts_input, lang='id', slow=False)
-                
-                # Menyimpan audio ke dalam memory (tidak perlu save file ke server)
                 audio_bytes = io.BytesIO()
                 tts.write_to_fp(audio_bytes)
                 audio_bytes.seek(0)
                 
-                # Menampilkan pemutar audio
                 st.success("✅ Audio berhasil dibuat!")
                 st.audio(audio_bytes, format='audio/mp3')
                 
-                # Tombol Download
                 st.download_button(
                     label="💾 Download Audio MP3",
                     data=audio_bytes,
@@ -147,4 +142,53 @@ if st.button("🎧 Generate Audio (MP3)"):
             except Exception as e:
                 st.error(f"Gagal membuat audio: {e}")
     else:
-        st.warning("⚠️ Kotak teksnya masih kosong, Bosku! Isi dulu skripnya.")
+        st.warning("⚠️ Kotak teksnya masih kosong, Bosku!")
+
+
+# ----------------------------------------------------
+# BAGIAN 3: STUDIO AVATAR (KUNCI WAJAH)
+# ----------------------------------------------------
+st.markdown("---")
+st.header("📸 3️⃣ Studio Avatar (Kunci Wajah)")
+st.write("Gunakan fitur ini untuk membuat 1 foto referensi model. *Download* foto ini dan gunakan sebagai 'Image Prompt' di platform Video Generator Anda agar wajah model tetap konsisten di setiap adegan.")
+
+avatar_prompt = st.text_area(
+    "🎨 Teks Deskripsi Karakter (Bahasa Inggris):", 
+    value="A beautiful 30-year-old Indonesian woman, warm and expressive, with long dark hair, wearing a stylish casual outfit, smiling warmly to the camera. Cinematic lighting, high quality.", 
+    height=100
+)
+
+if st.button("🖼️ Generate Foto Karakter"):
+    if avatar_prompt.strip() != "":
+        with st.spinner("✨ Menggambar karakter avatar Anda..."):
+            try:
+                # Memanggil model pembuat gambar dari Google (Imagen 3)
+                result = client.models.generate_images(
+                    model='imagen-3.0-generate-001',
+                    prompt=avatar_prompt,
+                    config=dict(
+                        number_of_images=1,
+                        aspect_ratio="16:9",
+                        output_mime_type="image/jpeg"
+                    )
+                )
+                
+                # Menampilkan dan menyiapkan tombol download gambar
+                for generated_image in result.generated_images:
+                    img_bytes = generated_image.image.image_bytes
+                    avatar_image = Image.open(io.BytesIO(img_bytes))
+                    
+                    st.success("✅ Wujud Avatar Berhasil Diciptakan!")
+                    st.image(avatar_image, caption="Simpan gambar ini untuk referensi Video AI Anda", use_container_width=True)
+                    
+                    st.download_button(
+                        label="💾 Download Foto Avatar",
+                        data=img_bytes,
+                        file_name="avatar_viralscript.jpg",
+                        mime="image/jpeg"
+                    )
+            except Exception as e:
+                st.error(f"⚠️ Gagal generate gambar: {e}")
+                st.info("💡 Terkadang API gratis membutuhkan waktu atau akses khusus. Alternatif: Copy deskripsi karakter di atas dan paste ke Bing Image Creator atau CapCut!")
+    else:
+        st.warning("⚠️ Deskripsi karakter tidak boleh kosong.")
